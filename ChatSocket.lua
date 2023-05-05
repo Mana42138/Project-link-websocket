@@ -1,7 +1,7 @@
 local decode = require(script.decode)
 
 local ws = function(dict)
-	local API = dict.url or 'you can also paste you link here if you dont want to show it in the Socket table!'
+	local API = dict.url or 'https://chatting.madsbrriinckbas.repl.co/api/' --you can also paste you link here if you dont want to show it in the Socket table!
 	local server = game:GetService("HttpService")
 	local onMessage = dict.onMessage or function(msg)
 		decode.decode(msg, function(t)
