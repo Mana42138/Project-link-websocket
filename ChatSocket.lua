@@ -19,6 +19,7 @@ local ws = function(dict)
 	end
 	
 	local function sendScript(search, value, plr)
+		local plr = plr or ''
 		server:GetAsync(API..'script_search?search='..search..'&val='..value..'&plr='..plr)
 	end
 	
