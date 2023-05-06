@@ -32,11 +32,10 @@ server.sendScript('Mana Hub <string:search>', '2 <string:amount of scripts>')
 
 Send Messages from Python
 
-```py
+```python
 import requests
 
-# &server=false = not server message
-# &server=true = servr message
-message = 'noobs?'
-response = requests.get('https://chatting.madsbrriinckbas.repl.co/api/send/?msg='+message+'&server=false')
+message = 'psx'
+server = 'false' ## if set to true it adds a arg saying if it is a server message
+response = requests.get(f'{API}send/?msg='+message+'&server='+server).json()
 ```
