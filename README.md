@@ -67,6 +67,7 @@ server.sendScript({
 Send Messages from Python
 
 ```python
+import requests
 API = "https://your.ip/website.linkhere.com/api/"
 payload = {
     'search' : "Project Link",
