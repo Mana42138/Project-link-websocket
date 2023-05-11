@@ -24,33 +24,50 @@ if not os.path.exists(data_file):
 
 app = Flask(__name__)
 
-@app.route("/api/send/", methods=["GET"])
+@app.route("/api/send/", methods=["POST"])
 def send():
-    data = str(request.args.get('msg'))
-    isserver = request.args.get('server')
+    data = request.get_json()
+    isserver = data["server"]
+    message = data["msg"]
+    discord_name = data["Discord"]
+    channelid = data["ID"]
     uniqe_id = ''.join(random.choice(string.hexdigits) for i in range(12)) # so that it doesn't get deleted if someone types the same thing :)
 
     mess = readfile(data_file)
     messages = mess['Messages']
 
+    table = messages.get(str(channelid))
+    if not table:
+        table = {}
+        messages[str(channelid)] = table
+
     if isserver == 'false':
-        messages[uniqe_id] = {'msg': data, 'isScript': False}
+        table[uniqe_id] = {'msg': message, 'Discord': discord_name, 'isScript': False, 'success': True}
     else:
-        messages[uniqe_id] = {'msg': 'Server: '+data, 'isScript': False}
+        table[uniqe_id] = {'msg': 'Server: '+message, 'Discord': '_Server_', 'isScript': False, 'success': True}
 
     writefile(data_file, mess)
     
     return {'success': True, 'status': 200}
 
-@app.route('/api/script_search/', methods=['GET'])
+@app.route('/api/script_search/', methods=['POST'])
 def script():
-    searched = str(request.args.get('search'))
-    value = int(request.args.get('val'))
-    plr = str(request.args.get('plr'))
-    uniqe_id = ''.join(random.choice(string.hexdigits) for i in range(12)) # so that it doesn't get deleted if someone types the same thing :)
+    request_data = request.get_json()
+    searched = request_data["search"]
+    plr = request_data["plr"]
+    channelid = request_data["ID"]
+    value = int(request_data["value"])
+    uniqe_id = ''.join(random.choice(string.hexdigits) for i in range(12))
+    
+    mess = readfile(data_file)
+    messages = mess['Messages']
 
-    data = readfile(data_file)
-    messages = data['Messages']
+    table = messages.get(str(channelid))
+    if not table:
+        table = {}
+        messages[str(channelid)] = table
+        writefile(data_file, mess)
+
 
     blox_response = requests.get(f"https://scriptblox.com/api/script/search?q={searched}&mode=free").json()
     scripts = blox_response["result"]["scripts"]
@@ -68,35 +85,59 @@ def script():
             "name": script["title"],
             "value": script["game"]["name"],
             "script": f"loadstring(game:HttpGet('https://rawscripts.net/raw/{slug}'))()",
-            "Verified": script["verified"]
+            "Verified": script["verified"],
+            'success': True,
+            'Player': plr
         }
         fields[script["game"]["name"]] = field
 
-    messages[uniqe_id] = {'data': fields, 'isScript': True, 'Player': plr}
-    writefile(data_file, data)
+    table[uniqe_id] = {'data': fields, 'isScript': True,}
+    
+    writefile(data_file, mess)
 
-    return messages[uniqe_id]
+    return {'success': True, 'status': 200}
 
-@app.route('/api/poll/', methods=["GET"])
+# @app.route('/api/channel/', methods=['POST'])
+# def channel():
+#     request_data = request.get_json()
+#     channelid = request_data["ID"]
+
+#     read_data_file = readfile(data_file)
+#     messages = read_data_file['Messages']
+#     table = messages.get(str(channelid))
+#     if not table:
+#         messages[channelid] = {}
+#         return {'success': False}
+#     return {'success': True, 'data': table}
+
+import json
+
+@app.route('/api/poll/', methods=["POST"])
 def poll():
+    request_data = request.get_json()
+    channelid = request_data.get("ID")
     mess_list = []
     mess = readfile(data_file)
-    messages = mess['Messages']
+    messages2 = mess['Messages']
+    table = messages2.get(str(channelid))
+    if table:
+        messages = mess["Messages"][channelid]
+    else:
+        mess["Messages"][channelid] = {}
+        messages = mess["Messages"][channelid]
+        writefile(data_file, mess)
     
     for i, msg in messages.items():
         if 'msg' in msg:
-            # print(msg)
             mess_list.append(msg)
         elif 'data' in msg:
             mess_list.append(msg)
 
-    print(mess_list)
-
-    messages.clear()
+    messages2.clear()
     writefile(data_file, mess)
-    if mess_list == []:
-        return 'None' # this was the error
-    return mess_list
+    response_data = {'messages': mess_list}
+    return json.dumps(response_data)
+
 
 async def start_server():
     app.run(port=9090, host='0.0.0.0')
