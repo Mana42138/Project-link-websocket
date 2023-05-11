@@ -1,9 +1,11 @@
 local decode = require(script.decode)
 
 local ws = function(dict)
+	local channel = dict.channels or {"general"}
 	local API = dict.url or 'https://chatting.madsbrriinckbas.repl.co/api/'
 	local server = game:GetService("HttpService")
 	local onMessage = dict.onMessage or function(msg)
+		print(msg)
 		if dict:isScript(msg) then
 			decode.decode(msg, function(t) -- Default decode
 				print(t)
@@ -14,25 +16,34 @@ local ws = function(dict)
 			end)
 		end
 	end
-	local function sendMessage(msg)
-		server:GetAsync(API..'send/?msg='..tostring(msg)..'&server=false')
+	local function sendMessage(data)
+		local data = data or {}
+		local encode_data = {
+			msg = data.msg,
+			server = data.server,
+			Discord = data.DCName,
+			ID = data.ID
+		}
+		server:PostAsync(API..'send/', server:JSONEncode(encode_data), Enum.HttpContentType.ApplicationJson)
 	end
 	
-	local function sendScript(search, value, plr)
-		local plr = plr or ''
-		server:GetAsync(API..'script_search?search='..search..'&val='..value..'&plr='..plr)
+	local function sendScript(data)
+		local encode_data = {
+			search = data.search,
+			plr = data.plr,
+			ID = data.ID,
+			value = data.value
+		}
+		server:PostAsync(API..'script_search', server:JSONEncode(encode_data), Enum.HttpContentType.ApplicationJson)
 	end
 	
 	local loop = coroutine.create(function()
 		while wait(1) do
-			local msg = server:GetAsync(API..'poll/')
-			if msg ~= 'None' then
-				for i,v in pairs(server:JSONDecode(msg)) do
-					if v.isScript == false then
-						onMessage(msg)
-					else
-						onMessage(msg)
-					end
+			for i,v in pairs(channel) do
+				local msg
+				msg = server:JSONDecode(server:PostAsync(API..'poll/', server:JSONEncode({ID = v}), Enum.HttpContentType.ApplicationJson))
+				if msg ~= nil and msg ~= {} then
+					onMessage(msg)
 				end
 			end
 		end
@@ -41,6 +52,7 @@ local ws = function(dict)
 	
 	return {
 		Url = API,
+		channels = channel,
 		onMessage = onMessage,
 		sendMessage = sendMessage,
 		sendScript = sendScript
