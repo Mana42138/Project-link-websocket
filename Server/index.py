@@ -3,6 +3,7 @@ import asyncio
 import random, string
 import json, os
 import requests
+import json
 
 data_file = 'chatting/data.json'
 
@@ -109,8 +110,6 @@ def script():
 #         messages[channelid] = {}
 #         return {'success': False}
 #     return {'success': True, 'data': table}
-
-import json
 
 @app.route('/api/poll/', methods=["POST"])
 def poll():
