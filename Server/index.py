@@ -3,7 +3,6 @@ import asyncio
 import random, string
 import json, os
 import requests
-import json
 
 data_file = 'chatting/data.json'
 
